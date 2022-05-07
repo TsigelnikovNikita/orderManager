@@ -34,4 +34,8 @@ contract OrderManager {
         emit newOrder(orderId);
         orderId++;
     }
+
+    function getOrderById(uint orderId) external view returns(Order) {
+        return orderes[orderId];
+    }
 }
