@@ -72,4 +72,12 @@ contract OrderManager is Ownable {
     {
         orderes[ID].status = newStatus;
     }
+
+    function removeOrder(uint ID)
+        external
+        orderIsExists(ID)
+        onlyOwner
+    {
+        delete orderes[ID];
+    }
 }
