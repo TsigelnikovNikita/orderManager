@@ -16,15 +16,19 @@ contract OrderManager is Ownable {
         uint32 productId;
         uint32 productCount;
         uint8 status;
-        bytes1[32] ipfs_hash;
+        bytes32 ipfs_hash;
         address customer;
     }
 
-    uint private orderId = 0;
+    uint private UUID = 0;
     uint private availableMoney = 0; 
     mapping(uint => Order) private orderes;
 
     event newOrderCreated(uint orderId);
+    event orderWasCanceled(uint orderId, string reason, address by);
+    event orderWasSent(uint orderId);
+    event orderWasDelivered(uint orderId);
+    event orderWasComplited(uint orderId);
 
     modifier orderIsExists(uint ID) {
         require(orderes[ID].status != 0, "Order doesn't exists");
@@ -40,11 +44,11 @@ contract OrderManager is Ownable {
         availableMoney = 0;
     }
 
-    function creadeOrder(uint32 _productId, uint32 _productCount, bytes1[32] memory _ipfs_hash)
+    function creadeOrder(uint32 _productId, uint32 _productCount, bytes32 _ipfs_hash)
         external
         payable
     {
-        Order storage newOrder = orderes[orderId];
+        Order storage newOrder = orderes[UUID];
         newOrder.orderDate = block.timestamp;
         newOrder.price = msg.value;
         newOrder.productId = _productId;
@@ -52,8 +56,8 @@ contract OrderManager is Ownable {
         newOrder.status = processing;
         newOrder.ipfs_hash = _ipfs_hash;
         newOrder.customer = msg.sender;
-        emit newOrderCreated(orderId);
-        orderId++;
+        emit newOrderCreated(UUID);
+        UUID++;
     }
 
     function getOrderById(uint ID) external view returns(Order memory) {
@@ -61,9 +65,9 @@ contract OrderManager is Ownable {
     }
 
     function _getOrderesByFilter(uint8 filter) private view returns(Order[] memory) {
-        Order[] memory result = new Order[](orderId);
+        Order[] memory result = new Order[](UUID);
         uint counter = 0;
-        for (uint i = 0; i < orderId; i++) {
+        for (uint i = 0; i < UUID; i++) {
             if (orderes[i].status & filter != 0) {
                 result[counter++] = orderes[i];
             }
@@ -95,24 +99,43 @@ contract OrderManager is Ownable {
         delete orderes[ID];
     }
 
-    function cancelOrder(uint ID, string calldata reason) external {
+    function cancelOrder(uint ID, string calldata reason)
+        external
+        orderIsExists(ID)
+    {
         require(orderes[ID].status == processing, "The order is already was sent");
         require(msg.sender == owner() || msg.sender == orderes[ID].customer, "You cannot cancel the order");
         _payBack(ID);
         orderes[ID].status = canceled;
         availableMoney -= orderes[ID].price;
+        emit orderWasCanceled(ID, reason, msg.sender);
     }
 
-    function sendOrder(uint ID) external onlyOwner {
+    function sendOrder(uint ID)
+        external
+        orderIsExists(ID)
+        onlyOwner
+    {
         orderes[ID].status = sent;
         availableMoney += orderes[ID].price;
+        emit orderWasSent(ID);
     }
 
-    function deliverOrder(uint ID) external onlyOwner {
+    function deliverOrder(uint ID)
+        external
+        orderIsExists(ID)
+        onlyOwner
+    {
         orderes[ID].status = delivered;
+        emit orderWasDelivered(ID);
     }
 
-    function completeOrder(uint ID) external onlyOwner {
+    function completeOrder(uint ID)
+        external
+        orderIsExists(ID)
+        onlyOwner
+    {
         orderes[ID].status = complited;
+        emit orderWasComplited(ID);
     }
 }
