@@ -41,6 +41,15 @@ contract OrderManager is Ownable {
         _;
     }
 
+    function getAvailableMoney()
+        external
+        view
+        onlyOwner
+        returns(uint)
+    {
+        return availableMoney;
+    }
+
     function _payBack(uint ID) internal {
         payable(orders[ID].customer).transfer(orders[ID].price);
     }
@@ -113,7 +122,6 @@ contract OrderManager is Ownable {
         require(msg.sender == owner() || msg.sender == orders[ID].customer, "You cannot cancel the order");
         _payBack(ID);
         orders[ID].status = canceled;
-        availableMoney -= orders[ID].price;
         emit orderWasCanceled(ID, reason, msg.sender);
     }
 

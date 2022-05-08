@@ -19,3 +19,15 @@ def test_create_order(orderManager):
     assert order[4] == status
     assert order[5] == ipfs_hash
     assert order[6] == customer
+
+def test_get_available_money(orderManager):
+    price = 10 ** 18
+    productId = 123
+    productCount = 2
+    ipfs_hash = 'QmTfCejgo2wTwqnDJs8Lu1pCNeCrCDuE4GAwkna93zdd7d'
+    customer = accounts[1]
+
+    orderManager.creadeOrder(productId, productCount, ipfs_hash, {'from': customer, 'amount': price})
+    orderManager.sendOrder(0)
+    available_money = orderManager.getAvailableMoney()
+    assert available_money == price
