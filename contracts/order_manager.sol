@@ -21,6 +21,7 @@ contract OrderManager is Ownable {
     }
 
     uint private orderId = 0;
+    uint private availableMoney = 0; 
     mapping(uint => Order) private orderes;
 
     event newOrderCreated(uint orderId);
@@ -94,5 +95,18 @@ contract OrderManager is Ownable {
         require(msg.sender == owner() || msg.sender == orderes[ID].customer, "You cannot cancel the order");
         payBack(ID);
         orderes[ID].status = canceled;
+    }
+
+    function sendOrder(uint ID) external onlyOwner {
+        orderes[ID].status = sent;
+        availableMoney += orderes[ID].price;
+    }
+
+    function deliverOrder(uint ID) external onlyOwner {
+        orderes[ID].status = delivered;
+    }
+
+    function completeOrder(uint ID) external onlyOwner {
+        orderes[ID].status = complited;
     }
 }
