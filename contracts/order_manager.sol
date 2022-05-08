@@ -31,6 +31,15 @@ contract OrderManager is Ownable {
         _;
     }
 
+    function _payBack(uint ID) internal {
+        payable(orderes[ID].customer).transfer(orderes[ID].price);
+    }
+
+    function withdraw() external onlyOwner {
+        payable(owner()).transfer(availableMoney);
+        availableMoney = 0;
+    }
+
     function creadeOrder(uint32 _productId, uint32 _productCount, bytes1[32] memory _ipfs_hash)
         external
         payable
@@ -86,15 +95,12 @@ contract OrderManager is Ownable {
         delete orderes[ID];
     }
 
-    function payBack(uint ID) internal {
-        // transfer money
-    }
-
-    function cancelOrder(uint ID) external {
+    function cancelOrder(uint ID, string calldata reason) external {
         require(orderes[ID].status == processing, "The order is already was sent");
         require(msg.sender == owner() || msg.sender == orderes[ID].customer, "You cannot cancel the order");
-        payBack(ID);
+        _payBack(ID);
         orderes[ID].status = canceled;
+        availableMoney -= orderes[ID].price;
     }
 
     function sendOrder(uint ID) external onlyOwner {
