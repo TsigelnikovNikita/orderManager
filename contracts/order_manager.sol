@@ -5,8 +5,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract OrderManager is Ownable {
     uint8 private constant processing = 1;
-    uint8 private constant complited  = 1 << 1;
-    uint8 private constant canceled   = 1 << 2;
+    uint8 private constant sent       = 1 << 1;
+    uint8 private constant delivered  = 1 << 2;
+    uint8 private constant complited  = 1 << 3;
+    uint8 private constant canceled   = 1 << 4;
 
     struct Order {
         uint orderDate;
@@ -15,6 +17,7 @@ contract OrderManager is Ownable {
         uint32 productCount;
         uint8 status;
         bytes1[32] ipfs_hash;
+        address customer;
     }
 
     uint private orderId = 0;
@@ -38,6 +41,7 @@ contract OrderManager is Ownable {
         newOrder.productCount = _productCount;
         newOrder.status = processing;
         newOrder.ipfs_hash = _ipfs_hash;
+        newOrder.customer = msg.sender;
         emit newOrderCreated(orderId);
         orderId++;
     }
@@ -79,5 +83,16 @@ contract OrderManager is Ownable {
         onlyOwner
     {
         delete orderes[ID];
+    }
+
+    function payBack(uint ID) internal {
+        // transfer money
+    }
+
+    function cancelOrder(uint ID) external {
+        require(orderes[ID].status == processing, "The order is already was sent");
+        require(msg.sender == owner() || msg.sender == orderes[ID].customer, "You cannot cancel the order");
+        payBack(ID);
+        orderes[ID].status = canceled;
     }
 }
