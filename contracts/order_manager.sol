@@ -15,6 +15,11 @@ contract OrderManager is Ownable {
     uint8 public constant delivered  = 1 << 2;
     uint8 public constant complited  = 1 << 3;
     uint8 public constant canceled   = 1 << 4;
+    uint8 public constant allStatuses = processing |
+                                        sent |
+                                        delivered |
+                                        complited |
+                                        canceled;
 
     struct Order {
         uint orderDate;
@@ -50,7 +55,7 @@ contract OrderManager is Ownable {
         return availableMoney;
     }
 
-    function _payBack(uint ID) internal {
+    function _payBack(uint ID) private {
         payable(orders[ID].customer).transfer(orders[ID].price);
     }
 
@@ -99,23 +104,75 @@ contract OrderManager is Ownable {
     }
 
     function getOrdersList() external view returns(Order[] memory) {
-        return _getOrdersByFilter(processing | complited | canceled);
+        return _getOrdersByFilter(allStatuses);
     }
 
     function _changeOrderStatus(uint ID, uint8 newStatus)
-        internal
+        private
         orderIsExists(ID)
         onlyOwner
     {
         orders[ID].status = newStatus;
     }
 
-    function removeOrder(uint ID)
-        external
+    function _removeOrder(uint ID)
         orderIsExists(ID)
-        onlyOwner
+        private
     {
         delete orders[ID];
+    }
+
+    function removeOrder(uint ID)
+        external
+        onlyOwner
+    {
+        _removeOrder(ID);
+    }
+
+    function _removeOrdersByFilter(uint filter)
+        private
+        returns(uint)
+    {
+        uint removedOrdersCount = 0;
+        for (uint i = 0; i < UUID; i++) {
+            if (orders[i].status & filter != 0) {
+                _removeOrder(i);
+                removedOrdersCount++;
+            }
+        }
+        return removedOrdersCount;
+    }
+
+    function removeOrdersByFilter(uint filter)
+        external
+        onlyOwner
+        returns(uint)
+    {
+        return _removeOrdersByFilter(filter);
+    }
+
+    function removeOrdersByInterval(uint from, uint to)
+        external
+        onlyOwner
+        returns(uint)
+    {
+        require(from < to);
+        uint removedOrdersCount = 0;
+        for (uint i = 0; i < UUID; i++) {
+            if (from <= orders[i].orderDate && orders[i].orderDate <= to) {
+                _removeOrder(i);
+                removedOrdersCount++;
+            }
+        }
+        return removedOrdersCount;
+    }
+
+    function removeAllOrders()
+        external
+        onlyOwner
+    {
+        _removeOrdersByFilter(allStatuses);
+        UUID = 0;
     }
 
     function cancelOrder(uint ID, string calldata reason)
