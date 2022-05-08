@@ -75,7 +75,11 @@ contract OrderManager is Ownable {
         UUID++;
     }
 
-    function getOrderById(uint ID) external view returns(Order memory) {
+    function getOrderById(uint ID)
+        external
+        view
+        orderIsExists(ID)
+        returns(Order memory) {
         return orders[ID];
     }
 
@@ -94,7 +98,7 @@ contract OrderManager is Ownable {
         return _getOrdersByFilter(filter);
     }
 
-    function getOrderesList() external view returns(Order[] memory) {
+    function getOrdersList() external view returns(Order[] memory) {
         return _getOrdersByFilter(processing | complited | canceled);
     }
 
