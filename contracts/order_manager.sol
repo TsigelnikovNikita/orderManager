@@ -22,7 +22,7 @@ contract OrderManager is Ownable {
         uint32 productId;
         uint32 productCount;
         uint8 status;
-        bytes32 ipfs_hash;
+        string ipfs_hash;
         address customer;
     }
 
@@ -50,7 +50,7 @@ contract OrderManager is Ownable {
         availableMoney = 0;
     }
 
-    function creadeOrder(uint32 _productId, uint32 _productCount, bytes32 _ipfs_hash)
+    function creadeOrder(uint32 _productId, uint32 _productCount, string memory _ipfs_hash)
         external
         payable
     {
@@ -89,8 +89,8 @@ contract OrderManager is Ownable {
         return _getOrdersByFilter(processing | complited | canceled);
     }
 
-    function changeOrderStatus(uint ID, uint8 newStatus)
-        external
+    function _changeOrderStatus(uint ID, uint8 newStatus)
+        internal
         orderIsExists(ID)
         onlyOwner
     {
@@ -119,29 +119,23 @@ contract OrderManager is Ownable {
 
     function sendOrder(uint ID)
         external
-        orderIsExists(ID)
-        onlyOwner
     {
-        orders[ID].status = sent;
+        _changeOrderStatus(ID, sent);
         availableMoney += orders[ID].price;
         emit orderWasSent(ID);
     }
 
     function deliverOrder(uint ID)
         external
-        orderIsExists(ID)
-        onlyOwner
     {
-        orders[ID].status = delivered;
+        _changeOrderStatus(ID, delivered);
         emit orderWasDelivered(ID);
     }
 
     function completeOrder(uint ID)
         external
-        orderIsExists(ID)
-        onlyOwner
     {
-        orders[ID].status = complited;
+        _changeOrderStatus(ID, complited);
         emit orderWasComplited(ID);
     }
 }
