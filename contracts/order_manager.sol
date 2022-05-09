@@ -103,14 +103,6 @@ contract OrderManager is Ownable {
         return _getOrdersByFilter(ALL_STATUSES);
     }
 
-    function _changeOrderStatus(uint ID, uint8 newStatus)
-        private
-        orderIsExists(ID)
-        onlyOwner
-    {
-        orders[ID].status = newStatus;
-    }
-
     function _removeOrder(uint ID)
         orderIsExists(ID)
         private
@@ -184,23 +176,29 @@ contract OrderManager is Ownable {
 
     function sendOrder(uint ID)
         external
+        orderIsExists(ID)
+        onlyOwner
     {
-        _changeOrderStatus(ID, SENT);
+        orders[ID].status = SENT;
         availableMoney += orders[ID].price;
         emit orderWasSent(ID);
     }
 
     function deliverOrder(uint ID)
         external
+        orderIsExists(ID)
+        onlyOwner
     {
-        _changeOrderStatus(ID, DELIVERED);
+        orders[ID].status = DELIVERED;
         emit orderWasDelivered(ID);
     }
 
     function completeOrder(uint ID)
         external
+        orderIsExists(ID)
+        onlyOwner
     {
-        _changeOrderStatus(ID, COMPLITED);
+        orders[ID].status = COMPLITED;
         emit orderWasComplited(ID);
     }
 }
