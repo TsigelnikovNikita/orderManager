@@ -10,16 +10,12 @@ contract OrderManager is Ownable {
         you can just specify mask like "sent | complited".
         See an example in getOrdersList and _getOrdersByFilter methods.
      */
-    uint8 public constant processing = 1;
-    uint8 public constant sent       = 1 << 1;
-    uint8 public constant delivered  = 1 << 2;
-    uint8 public constant complited  = 1 << 3;
-    uint8 public constant canceled   = 1 << 4;
-    uint8 public constant allStatuses = processing |
-                                        sent |
-                                        delivered |
-                                        complited |
-                                        canceled;
+    uint8 public constant PROCESSING  = 1; // 1 << 1
+    uint8 public constant SENT        = 2; // 1 << 2
+    uint8 public constant DELIVERED   = 4; // 1 << 3
+    uint8 public constant COMPLITED   = 8; // 1 << 4
+    uint8 public constant CANCELED    = 16; // 1 << 5
+    uint8 public constant ALL_STATUSES = 31;
 
     struct Order {
         uint orderDate;
@@ -31,8 +27,8 @@ contract OrderManager is Ownable {
         address customer;
     }
 
-    uint private UUID = 0;
-    uint private availableMoney = 0; 
+    uint private UUID;
+    uint private availableMoney; 
     mapping(uint => Order) private orders;
 
     event newOrderCreated(uint orderId);
@@ -73,7 +69,7 @@ contract OrderManager is Ownable {
         newOrder.price = msg.value;
         newOrder.productId = _productId;
         newOrder.productCount = _productCount;
-        newOrder.status = processing;
+        newOrder.status = PROCESSING;
         newOrder.ipfs_hash = _ipfs_hash;
         newOrder.customer = msg.sender;
         emit newOrderCreated(UUID);
@@ -90,8 +86,8 @@ contract OrderManager is Ownable {
 
     function _getOrdersByFilter(uint8 filter) private view returns(Order[] memory) {
         Order[] memory result = new Order[](UUID);
-        uint counter = 0;
-        for (uint i = 0; i < UUID; i++) {
+        uint counter;
+        for (uint i; i < UUID; i++) {
             if (orders[i].status & filter != 0) {
                 result[counter++] = orders[i];
             }
@@ -104,7 +100,7 @@ contract OrderManager is Ownable {
     }
 
     function getOrdersList() external view returns(Order[] memory) {
-        return _getOrdersByFilter(allStatuses);
+        return _getOrdersByFilter(ALL_STATUSES);
     }
 
     function _changeOrderStatus(uint ID, uint8 newStatus)
@@ -133,8 +129,8 @@ contract OrderManager is Ownable {
         private
         returns(uint)
     {
-        uint removedOrdersCount = 0;
-        for (uint i = 0; i < UUID; i++) {
+        uint removedOrdersCount;
+        for (uint i; i < UUID; i++) {
             if (orders[i].status & filter != 0) {
                 _removeOrder(i);
                 removedOrdersCount++;
@@ -157,8 +153,8 @@ contract OrderManager is Ownable {
         returns(uint)
     {
         require(from < to);
-        uint removedOrdersCount = 0;
-        for (uint i = 0; i < UUID; i++) {
+        uint removedOrdersCount;
+        for (uint i; i < UUID; i++) {
             if (from <= orders[i].orderDate && orders[i].orderDate <= to) {
                 _removeOrder(i);
                 removedOrdersCount++;
@@ -171,7 +167,7 @@ contract OrderManager is Ownable {
         external
         onlyOwner
     {
-        _removeOrdersByFilter(allStatuses);
+        _removeOrdersByFilter(ALL_STATUSES);
         UUID = 0;
     }
 
@@ -179,17 +175,17 @@ contract OrderManager is Ownable {
         external
         orderIsExists(ID)
     {
-        require(orders[ID].status == processing, "The order is already was sent");
+        require(orders[ID].status == PROCESSING, "The order is already was sent");
         require(msg.sender == owner() || msg.sender == orders[ID].customer, "You cannot cancel the order");
         _payBack(ID);
-        orders[ID].status = canceled;
+        orders[ID].status = CANCELED;
         emit orderWasCanceled(ID, reason, msg.sender);
     }
 
     function sendOrder(uint ID)
         external
     {
-        _changeOrderStatus(ID, sent);
+        _changeOrderStatus(ID, SENT);
         availableMoney += orders[ID].price;
         emit orderWasSent(ID);
     }
@@ -197,14 +193,14 @@ contract OrderManager is Ownable {
     function deliverOrder(uint ID)
         external
     {
-        _changeOrderStatus(ID, delivered);
+        _changeOrderStatus(ID, DELIVERED);
         emit orderWasDelivered(ID);
     }
 
     function completeOrder(uint ID)
         external
     {
-        _changeOrderStatus(ID, complited);
+        _changeOrderStatus(ID, COMPLITED);
         emit orderWasComplited(ID);
     }
 }

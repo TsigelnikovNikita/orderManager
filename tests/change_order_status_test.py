@@ -7,7 +7,7 @@ def test_change_order_status_to_sent(orderManager):
     productCount = 2
     ipfs_hash = 'QmTfCejgo2wTwqnDJs8Lu1pCNeCrCDuE4GAwkna93zdd7d'
     customer = accounts[1]
-    expected_status = orderManager.sent()
+    expected_status = orderManager.SENT()
 
     orderManager.creadeOrder(productId, productCount, ipfs_hash, {'from': customer, 'amount': price})
     orderManager.sendOrder(0)
@@ -21,7 +21,7 @@ def test_change_order_status_to_delivered(orderManager):
     productCount = 2
     ipfs_hash = 'QmTfCejgo2wTwqnDJs8Lu1pCNeCrCDuE4GAwkna93zdd7d'
     customer = accounts[1]
-    expected_status = orderManager.delivered()
+    expected_status = orderManager.DELIVERED()
 
     orderManager.creadeOrder(productId, productCount, ipfs_hash, {'from': customer, 'amount': price})
     orderManager.deliverOrder(0)
@@ -35,7 +35,7 @@ def test_change_order_status_to_complited(orderManager):
     productCount = 2
     ipfs_hash = 'QmTfCejgo2wTwqnDJs8Lu1pCNeCrCDuE4GAwkna93zdd7d'
     customer = accounts[1]
-    expected_status = orderManager.complited()
+    expected_status = orderManager.COMPLITED()
 
     orderManager.creadeOrder(productId, productCount, ipfs_hash, {'from': customer, 'amount': price})
     orderManager.completeOrder(0)
