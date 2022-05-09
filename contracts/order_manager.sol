@@ -51,10 +51,6 @@ contract OrderManager is Ownable {
         return availableMoney;
     }
 
-    function _payBack(uint ID) private {
-        payable(orders[ID].customer).transfer(orders[ID].price);
-    }
-
     function withdraw() external onlyOwner {
         payable(owner()).transfer(availableMoney);
         availableMoney = 0;
@@ -169,8 +165,11 @@ contract OrderManager is Ownable {
     {
         require(orders[ID].status == PROCESSING, "The order is already was sent");
         require(msg.sender == owner() || msg.sender == orders[ID].customer, "You cannot cancel the order");
-        _payBack(ID);
+
         orders[ID].status = CANCELED;
+        (bool success,) = orders[ID].customer.call{value: orders[ID].price}("");
+        require(success, "Error message"); // TODO need to add normal message
+
         emit orderWasCanceled(ID, reason, msg.sender);
     }
 
