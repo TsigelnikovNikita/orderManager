@@ -173,6 +173,7 @@ contract OrderManager is Ownable {
         emit orderWasCanceled(ID, reason, msg.sender);
     }
 
+    // TODO: need to add modifier for checking that this order wasn't sent before. Do this for all states.
     function sendOrder(uint ID)
         external
         orderIsExists(ID)
